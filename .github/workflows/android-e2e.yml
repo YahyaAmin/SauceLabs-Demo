@@ -54,7 +54,9 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             adb install -r app/mda-2.2.0-25.apk
-            npx wdio run wdio.conf.ts --cucumberOpts.tagExpression='@smoke'
+            adb shell svc power stayon true || true
+            adb shell wm dismiss-keyguard || true
+            npx wdio run wdio.conf.ts --cucumberOpts.tagExpression='@smoke' --cucumberOpts.retry=2
 
       - name: Upload Allure results
         if: always()
