@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Test artifacts / reports
+allure-results/
+allure-report/
+.allure/
+logs/
+*.log
+
+# Editor / OS
+.vscode/
+.DS_Store
+.idea/
