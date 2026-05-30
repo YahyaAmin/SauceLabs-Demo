@@ -1,0 +1,63 @@
+name: Android E2E
+
+# Runs the mobile UI automation suite on a real Android emulator in CI.
+# Mirrors the local setup: Node + JDK 17 + Appium (UiAutomator2) + API 34 emulator.
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:          # allows manual re-runs from the Actions tab
+
+jobs:
+  android-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Appium + UiAutomator2 driver
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+
+      - name: Enable KVM (hardware acceleration for the emulator)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run working-journey suite on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          disable-animations: true
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            adb install -r app/mda-2.2.0-25.apk
+            npx wdio run wdio.conf.ts --cucumberOpts.tagExpression='@smoke'
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
