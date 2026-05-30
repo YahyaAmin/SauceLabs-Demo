@@ -1,5 +1,7 @@
 # Mobile App UI Automation — Quality Engineer Assessment
 
+![Android E2E](https://github.com/YahyaAmin/SauceLabs-Demo/actions/workflows/android-e2e.yml/badge.svg)
+
 Automated UI tests for the **Sauce Labs My Demo App** (Android) covering the
 required user journey:
 
@@ -76,11 +78,70 @@ npx wdio run wdio.conf.ts --cucumberOpts.tagExpression='@smoke'
 npx wdio run wdio.conf.ts --cucumberOpts.tagExpression='@secondProduct'
 ```
 
-### Allure report
+### Allure report (local)
 ```bash
 npx allure generate -o allure-report allure-results
 npx allure open allure-report
 ```
+
+> **Windows PowerShell note:** if `npx` is blocked by the execution policy
+> (`running scripts is disabled on this system`), use `npx.cmd` instead — e.g.
+> `npx.cmd allure generate -o allure-report allure-results` — or run the command
+> from Command Prompt.
+
+---
+
+## Continuous Integration
+
+A GitHub Actions workflow (`.github/workflows/android-e2e.yml`) runs the suite on
+a **real Android emulator** on every push to `main`, and can be triggered manually
+from the Actions tab (`workflow_dispatch`).
+
+What the pipeline does:
+
+1. Checks out the repo and sets up Node + JDK 17.
+2. Installs dependencies and the Appium UiAutomator2 driver.
+3. Enables **KVM** hardware acceleration for the emulator.
+4. Boots a **Pixel 6, API 34** emulator via `reactivecircus/android-emulator-runner`.
+5. Installs the APK, dismisses the lock screen, and runs the working-journey suite.
+6. Uploads the Allure **results** as a downloadable build artifact.
+
+### Why CI runs only the working journey
+
+CI gates on the **`@smoke` working journey only**. The intentionally-failing
+defect scenario is **excluded from the gate** so a known, documented bug does not
+permanently break the build. It is tracked as a known issue (see *Defect* below)
+and would be re-enabled in CI once the app crash is fixed — this mirrors standard
+practice of quarantining known failures rather than letting them block the pipeline.
+
+### CI emulator stability
+
+GitHub-hosted emulators are cold-booted and software-rendered, so they are less
+deterministic than a local device. The workflow includes the standard mitigations:
+dismissing the keyguard, keeping the screen awake, headless emulator options, and a
+scenario `retry` so a flaky first attempt re-runs on a fresh app launch.
+
+### Viewing the CI Allure report
+
+CI publishes the raw Allure **results** (not a pre-built HTML report) as a build
+artifact, following the convention of publishing results and generating the report
+on demand:
+
+1. Open the workflow run: **GitHub → Actions → (select the run)** → scroll to the
+   **Artifacts** section → download **`allure-results`**.
+2. Unzip it (e.g. to `Downloads/allure-results`).
+3. From the project folder, generate and open the report, pointing at the unzipped
+   folder:
+   ```bash
+   npx allure generate -o allure-report-ci "C:\Users\yahya\Downloads\allure-results"
+   npx allure open allure-report-ci
+   ```
+   > On Windows PowerShell, use `npx.cmd` in place of `npx` if the execution
+   > policy blocks the script (or run from Command Prompt).
+
+> The CI report contains only the single passing working journey (the defect
+> scenario is excluded from CI by design). The richer **local** Allure report
+> shows both scenarios, including the failing defect scenario with its screenshot.
 
 ---
 
@@ -154,7 +215,7 @@ Rather than asserting brittle equality, the verification **normalises the
 
 ---
 
-## Cross-platform
+## Cross-platform (stretch goal)
 
 The design is iOS-ready: locators are accessibility-id based (which map to iOS
 `accessibilityIdentifier`), and platform-specific values would live behind a
@@ -168,6 +229,9 @@ same step definitions and feature file unchanged.
 
 ```
 .
+├── .github/
+│   └── workflows/
+│       └── android-e2e.yml      # CI: emulator-based E2E on every push
 ├── app/
 │   └── mda-2.2.0-25.apk
 ├── features/
@@ -179,6 +243,7 @@ same step definitions and feature file unchanged.
 │   │   └── cart.screen.ts
 │   └── step-definitions/
 │       └── cart.steps.ts
+├── .gitignore
 ├── wdio.conf.ts
 ├── package.json
 └── README.md
