@@ -3,7 +3,7 @@ import { expect } from '@wdio/globals';
 
 import CatalogScreen from '../pageobjects/catalog.screen';
 import ProductDetailScreen from '../pageobjects/product.screen';
-import CartScreen, { normaliseName } from '../pageobjects/cart.screen';
+import CartScreen from '../pageobjects/cart.screen';
 
 /**
  * Shared state across steps within a scenario.
@@ -40,11 +40,9 @@ When(/^I open the cart$/, async () => {
 Then(/^the cart should contain that product$/, async () => {
   const cartTitle = await CartScreen.getFirstItemTitle();
 
-  // Catalog may include a "(colour)" suffix that the cart omits; normalise both.
-  const expectedBase = normaliseName(expectedProductName);
-  const actualBase = normaliseName(cartTitle);
-
-  await expect(actualBase).toContain(expectedBase);
+  // Catalog and cart both expose the full title (incl. colour) via titleTV,
+  // so we compare directly — this verifies the correct colour variant too.
+  await expect(cartTitle).toEqual(expectedProductName);
 });
 
 Then(/^the cart should have exactly (\d+) item$/, async (count: string) => {

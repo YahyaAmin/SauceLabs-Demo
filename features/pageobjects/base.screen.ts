@@ -3,7 +3,7 @@
  * ----------
  * Common helpers shared by every screen object.
  *
- * Locator strategy note (interview talking point):
+ * Locator strategy note:
  *  - On Android, an element's "accessibility id" maps to its `content-desc`
  *    attribute. In WebdriverIO this is selected with the `~` prefix
  *    (e.g. `~Product Image`). It is the most stable / preferred strategy.

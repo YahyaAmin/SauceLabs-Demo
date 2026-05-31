@@ -35,11 +35,3 @@ class CartScreen extends BaseScreen {
 }
 
 export default new CartScreen();
-
-/**
- * Strip a trailing " (colour)" suffix so catalog and cart names can be
- * compared. e.g. "Sauce Labs Backpack (orange)" -> "Sauce Labs Backpack".
- */
-export function normaliseName(name: string): string {
-  return name.replace(/\s*\([^)]*\)\s*$/, '').trim();
-}

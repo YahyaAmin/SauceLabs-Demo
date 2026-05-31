@@ -155,8 +155,12 @@ on demand:
   collection is located by accessibility id and the specific product is chosen
   by index in code (`$$('~Product Image')[index]`). Gherkin uses human-friendly
   1-based "position N"; the step converts it to WDIO's 0-based index.
-- **Dynamic verification** — the product's name is captured from the catalog
-  *before* navigating, then asserted in the cart. Nothing is hardcoded.
+- **Dynamic verification** — the product's full title is captured from the
+  catalog *before* navigating, then asserted against the cart's title. Nothing
+  is hardcoded. Because both the catalog and cart expose the **full title
+  including the colour suffix** (e.g. `Sauce Labs Backpack (orange)`) via the
+  same `titleTV` element, a direct equality check also confirms the **correct
+  colour variant** — not just the right product family.
 - **Resilient waits** — `waitForDisplayed` on each screen's root marker rather
   than fixed sleeps.
 
@@ -206,12 +210,13 @@ through the UI. This is handled honestly with two scenarios:
 A test that *catches* a real defect is doing its job; the working scenario
 satisfies the "working automated test that covers the user journey" requirement.
 
-### Minor — product name inconsistency (catalog vs cart)
+### Note — colour variant is verified, not just the product
 
-The catalog shows colour-variant names like `Sauce Labs Backpack (orange)`, but
-the cart shows the base name `Sauce Labs Backpack` (colour is a separate field).
-Rather than asserting brittle equality, the verification **normalises the
-`(colour)` suffix** and asserts the cart title contains the base product name.
+The catalog and cart both display the **full** product title including the
+colour suffix (e.g. `Sauce Labs Backpack (orange)`) in the same `titleTV`
+element. The verification therefore compares the captured catalog title against
+the cart title directly, which confirms the exact **colour variant** reached the
+cart — a green vs orange mix-up would fail the assertion, not pass it.
 
 ---
 
